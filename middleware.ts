@@ -1,46 +1,71 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 
-// Регулярні вирази для маршрутів
-const PUBLIC_FILE = /\.(.*)$/;
+import { checkSession } from "./lib/api/serverApi";
+
 const AUTH_ROUTES = ["/sign-in", "/sign-up"];
-const PRIVATE_ROUTES = ["/profile", "/notes"];
+const PRIVATE_ROUTE_PREFIXES = ["/profile", "/notes"];
 
-// Визначаємо, чи маршрут є приватним
 function isPrivateRoute(pathname: string) {
-  return PRIVATE_ROUTES.some((route) => pathname.startsWith(route));
+  return PRIVATE_ROUTE_PREFIXES.some((route) => pathname.startsWith(route));
 }
 
-// Визначаємо, чи маршрут є маршрутом аутентифікації
 function isAuthRoute(pathname: string) {
   return AUTH_ROUTES.includes(pathname);
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Ігноруємо публічні файли (стилі, зображення, favicon)
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
-    PUBLIC_FILE.test(pathname)
+    pathname.includes(".")
   ) {
     return NextResponse.next();
   }
 
-  // Отримуємо cookie з токеном
-  const token = request.cookies.get("token");
-  const isAuthenticated = !!token;
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  const refreshToken = cookieStore.get("refreshToken")?.value;
 
-  if (isPrivateRoute(pathname) && !isAuthenticated) {
-    // 1. Приватний маршрут без токена -> Редірект на логін
+  const isAuthenticated = !!accessToken;
+
+  if (isPrivateRoute(pathname)) {
+    if (isAuthenticated) {
+      return NextResponse.next();
+    }
+
+    if (refreshToken) {
+      try {
+        const response = await checkSession();
+        const setCookieHeader = response.headers["set-cookie"];
+
+        if (response.status === 200 && setCookieHeader) {
+          const nextResponse = NextResponse.next();
+
+          const cookieArray = Array.isArray(setCookieHeader)
+            ? setCookieHeader
+            : [setCookieHeader];
+
+          cookieArray.forEach((cookieStr) => {
+            nextResponse.headers.append("Set-Cookie", cookieStr);
+          });
+
+          return nextResponse;
+        }
+      } catch (error) {
+        console.error("Token refresh failed:", error);
+      }
+    }
+
     const signInUrl = new URL("/sign-in", request.url);
-    signInUrl.searchParams.set("redirect", pathname); // Зберігаємо, куди йшов користувач
+    signInUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(signInUrl);
   }
 
   if (isAuthRoute(pathname) && isAuthenticated) {
-    // 2. Маршрут аутентифікації з токеном -> Редірект на профіль
     return NextResponse.redirect(new URL("/profile", request.url));
   }
 
@@ -48,6 +73,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Додайте всі маршрути, які потрібно перевіряти, включаючи групи маршрутів
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
+  matcher: ["/profile/:path*", "/notes/:path*", "/sign-in", "/sign-up"],
 };

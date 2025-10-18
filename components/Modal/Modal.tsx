@@ -5,12 +5,12 @@ import { createPortal } from "react-dom";
 import styles from "./Modal.module.css";
 
 interface ModalProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen = true, onClose, children }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -23,6 +23,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
         onClose();
       }
     }
+
     if (isOpen) {
       document.addEventListener("keydown", onKeyDown);
     }
@@ -31,7 +32,9 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !mounted) return null;
+  if (!mounted) return null;
+
+  if (!isOpen) return null;
 
   const modalRoot = document.getElementById("modal-root");
   if (!modalRoot) return null;

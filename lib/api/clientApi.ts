@@ -1,4 +1,4 @@
-import { clientApi } from "@/lib/api/api";
+import { nextApi } from "@/lib/api/api";
 import type { Note, NoteTag } from "@/types/note";
 import type { User } from "@/types/user";
 
@@ -18,22 +18,22 @@ export interface CreateNoteParams {
 }
 
 export async function register(credentials: AuthCredentials): Promise<User> {
-  const response = await clientApi.post<User>("/auth/register", credentials);
+  const response = await nextApi.post<User>("/auth/register", credentials);
   return response.data;
 }
 
 export async function login(credentials: AuthCredentials): Promise<User> {
-  const response = await clientApi.post<User>("/auth/login", credentials);
+  const response = await nextApi.post<User>("/auth/login", credentials);
   return response.data;
 }
 
 export async function logout(): Promise<void> {
-  await clientApi.post("/auth/logout");
+  await nextApi.post("/auth/logout");
 }
 
 export async function checkSession(): Promise<User | null> {
   try {
-    const response = await clientApi.get<User>("/auth/session");
+    const response = await nextApi.get<User>("/auth/session");
     return response.data;
   } catch {
     return null;
@@ -41,12 +41,12 @@ export async function checkSession(): Promise<User | null> {
 }
 
 export async function getMe(): Promise<User> {
-  const response = await clientApi.get<User>("/users/me");
+  const response = await nextApi.get<User>("/users/me");
   return response.data;
 }
 
 export async function updateMe(data: Partial<User>): Promise<User> {
-  const response = await clientApi.patch<User>("/users/me", data);
+  const response = await nextApi.patch<User>("/users/me", data);
   return response.data;
 }
 
@@ -60,23 +60,23 @@ export async function fetchNotes(
   if (search) params.search = search;
   if (tag && tag.toLowerCase() !== "all") params.tag = tag;
 
-  const response = await clientApi.get<FetchNotesResponse>("/notes", {
+  const response = await nextApi.get<FetchNotesResponse>("/notes", {
     params,
   });
   return response.data;
 }
 
 export async function createNote(newNote: CreateNoteParams): Promise<Note> {
-  const response = await clientApi.post<Note>("/notes", newNote);
+  const response = await nextApi.post<Note>("/notes", newNote);
   return response.data;
 }
 
 export async function deleteNote(id: string): Promise<Note> {
-  const response = await clientApi.delete<Note>(`/notes/${id}`);
+  const response = await nextApi.delete<Note>(`/notes/${id}`);
   return response.data;
 }
 
 export async function fetchNoteById(id: string): Promise<Note> {
-  const response = await clientApi.get<Note>(`/notes/${id}`);
+  const response = await nextApi.get<Note>(`/notes/${id}`);
   return response.data;
 }

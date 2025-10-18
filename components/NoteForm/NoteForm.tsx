@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import css from "./NoteForm.module.css";
 import { useNoteStore } from "@/lib/store/noteStore";
 import type { Draft } from "@/lib/store/noteStore";
+import { createNote } from "@/lib/api/clientApi";
 
 const validTags = ["Todo", "Work", "Personal", "Meeting", "Shopping"];
 
@@ -53,24 +54,18 @@ export default function NoteForm({ onCancel, onSuccess }: NoteFormProps) {
     setErrors(validate(updated));
   };
 
-  // --- TanStack Mutation ---
   const createNoteMutation = useMutation({
     mutationFn: async (note: Draft) => {
-      const res = await fetch("/api/notes/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(note),
-      });
-      if (!res.ok) throw new Error("Failed to create note");
-      return res.json();
+      return createNote(note);
     },
     onSuccess: async () => {
       clearDraft();
+
       await queryClient.invalidateQueries({ queryKey: ["notes"] });
       onSuccess();
     },
     onError: (error: Error) => {
-      setErrors({ submit: error.message });
+      setErrors({ submit: error.message || "Failed to create note." });
     },
   });
 
@@ -79,6 +74,7 @@ export default function NoteForm({ onCancel, onSuccess }: NoteFormProps) {
     const validation = validate(form);
     setErrors(validation);
     if (Object.keys(validation).length > 0) return;
+
     createNoteMutation.mutate(form);
   };
 
