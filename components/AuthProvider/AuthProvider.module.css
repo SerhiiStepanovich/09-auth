@@ -1,0 +1,23 @@
+/* AuthProvider.module.css */
+
+.loader {
+  /* Фіксована позиція, щоб перекрити весь екран */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  /* Центрування вмісту (тексту "Loading application...") */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Стилізація: фон та текст */
+  background-color: var(
+    --color-background
+  ); /* Використовуйте змінну фону вашого проєкту */
+  color: var(--color-text-primary);
+  font-size: 1.5rem;
+  z-index: 1000; /* Гарантує, що лоадер буде над усім іншим */
+}
