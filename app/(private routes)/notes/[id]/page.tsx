@@ -48,11 +48,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const Details = async ({ params }: PageProps) => {
-  const resolvedParams = params;
+  const resolvedParams = await params;
   const id = resolvedParams.id;
 
   const queryClient = new QueryClient();

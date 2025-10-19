@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
-
 import { checkSession } from "./lib/api/serverApi";
 
 const AUTH_ROUTES = ["/sign-in", "/sign-up"];
@@ -43,17 +42,17 @@ export async function middleware(request: NextRequest) {
         const setCookieHeader = response.headers["set-cookie"];
 
         if (response.status === 200 && setCookieHeader) {
-          const nextResponse = NextResponse.next();
+          const redirectResponse = NextResponse.redirect(request.url);
 
           const cookieArray = Array.isArray(setCookieHeader)
             ? setCookieHeader
             : [setCookieHeader];
 
           cookieArray.forEach((cookieStr) => {
-            nextResponse.headers.append("Set-Cookie", cookieStr);
+            redirectResponse.headers.append("Set-Cookie", cookieStr);
           });
 
-          return nextResponse;
+          return redirectResponse;
         }
       } catch (error) {
         console.error("Token refresh failed:", error);
@@ -66,7 +65,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthRoute(pathname) && isAuthenticated) {
-    return NextResponse.redirect(new URL("/profile", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
